@@ -1,3 +1,10 @@
+--[[
+    Age of Heroes - Premium (CORRIGIDO)
+    Versão: 1.0.2
+    Fast Punch com evento correto
+]]
+
+-- Serviços
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -5,7 +12,6 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local LocalPlayer = Players.LocalPlayer
-local Mouse = LocalPlayer:GetMouse()
 
 -- Variáveis de configuração
 local CONFIG = {
@@ -518,89 +524,69 @@ local function setupTeleportSystem(ui)
     end)
 end
 
--- ==================== SISTEMA FAST PUNCH ====================
+-- ==================== SISTEMA FAST PUNCH (CORRIGIDO) ====================
 local function setupFastPunch(ui)
     local isRunning = false
     
+    -- 🔧 EVENTO CORRETO DO AGE OF HEROES
+    local PUNCH_EVENT = ReplicatedStorage:FindFirstChild("Events") and ReplicatedStorage.Events:FindFirstChild("Punch")
+    
+    -- Se não encontrou, tenta alternativas
+    if not PUNCH_EVENT then
+        PUNCH_EVENT = ReplicatedStorage:FindFirstChild("Punch")
+    end
+    
+    -- Notifica se encontrou ou não
+    if PUNCH_EVENT then
+        ui.notificationSystem:Show("✅ Fast Punch pronto!")
+    else
+        ui.notificationSystem:Show("⚠️ Evento de soco não encontrado!")
+    end
+    
+    -- ARGUMENTOS CORRETOS DO AGE OF HEROES
+    local PUNCH_ARGS = {0, 0.1, 1}
+    
     local function getStamina()
-        pcall(function()
-            local character = LocalPlayer.Character
-            if not character then return 0 end
-            
-            local humanoid = character:FindFirstChild("Humanoid")
-            if not humanoid then return 0 end
-            
-            local stamina = character:GetAttribute("Stamina") or character:GetAttribute("Energy")
-            if stamina then return stamina end
-            
-            stamina = character:FindFirstChild("Stamina")
-            if stamina and stamina:IsA("NumberValue") then
-                return stamina.Value
-            end
-            
-            return humanoid.Health
-        end)
-        return 0
+        local character = LocalPlayer.Character
+        if not character then return 0 end
+        
+        local humanoid = character:FindFirstChild("Humanoid")
+        if not humanoid then return 0 end
+        
+        -- Tenta diferentes formas de stamina
+        local stamina = character:GetAttribute("Stamina") or character:GetAttribute("Energy")
+        if stamina then return stamina end
+        
+        stamina = character:FindFirstChild("Stamina")
+        if stamina and stamina:IsA("NumberValue") then
+            return stamina.Value
+        end
+        
+        return humanoid.Health
     end
     
     local function doPunch()
-        pcall(function()
-            local character = LocalPlayer.Character
-            if not character then return end
-            
-            local tool = character:FindFirstChildOfClass("Tool")
-            if tool then
-                local remoteEvent = tool:FindFirstChild("RemoteEvent") or tool:FindFirstChild("Attack") or tool:FindFirstChild("Activate")
-                if remoteEvent and remoteEvent:IsA("RemoteEvent") then
-                    remoteEvent:FireServer()
-                    return
-                end
-                
-                local bindable = tool:FindFirstChild("Activate") or tool:FindFirstChild("Attack")
-                if bindable and bindable:IsA("BindableEvent") then
-                    bindable:Fire()
-                    return
-                end
-                
-                if tool:IsA("Tool") then
-                    tool:Activate()
-                    return
-                end
-            end
-            
-            local events = ReplicatedStorage:FindFirstChild("Events")
-            if events then
-                local punchEvent = events:FindFirstChild("Punch") or events:FindFirstChild("Attack") or events:FindFirstChild("Swing")
-                if punchEvent and punchEvent:IsA("RemoteEvent") then
-                    punchEvent:FireServer()
-                    return
-                end
-            end
-            
-            local directEvent = ReplicatedStorage:FindFirstChild("Punch") or ReplicatedStorage:FindFirstChild("Attack")
-            if directEvent and directEvent:IsA("RemoteEvent") then
-                directEvent:FireServer()
-            end
-        end)
+        if PUNCH_EVENT and PUNCH_EVENT:IsA("RemoteEvent") then
+            pcall(function()
+                PUNCH_EVENT:FireServer(unpack(PUNCH_ARGS))
+            end)
+        end
     end
     
     local function fastPunchLoop()
         isRunning = true
         while CONFIG.FAST_PUNCH_ENABLED and isRunning do
-            pcall(function()
-                local stamina = getStamina()
-                ui.staminaLabel.Text = "Stamina: " .. math.floor(stamina)
-                
-                if stamina < CONFIG.STAMINA_THRESHOLD then
-                    ui.staminaLabel.TextColor3 = Color3.fromRGB(231, 76, 60)
-                    task.wait(0.5)
-                    return
-                end
-                
+            local stamina = getStamina()
+            ui.staminaLabel.Text = "Stamina: " .. math.floor(stamina)
+            
+            if stamina < CONFIG.STAMINA_THRESHOLD then
+                ui.staminaLabel.TextColor3 = Color3.fromRGB(231, 76, 60)
+                task.wait(0.5)
+            else
                 ui.staminaLabel.TextColor3 = Color3.fromRGB(46, 204, 113)
                 doPunch()
                 task.wait(CONFIG.FAST_PUNCH_SPEED)
-            end)
+            end
         end
     end
     
