@@ -1,15 +1,9 @@
---[[
-    Age of Heroes - age modd v1
-    Versão: 1.0.0
-    Desenvolvedor: Desconhecido
-    Descrição: Interface premium com Fast Punch e Player Teleport
---]]
-
--- Serviços
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
@@ -17,83 +11,79 @@ local Mouse = LocalPlayer:GetMouse()
 local CONFIG = {
     UI_NAME = "Age of Heroes Premium",
     FAST_PUNCH_ENABLED = false,
-    FAST_PUNCH_SPEED = 0.05, -- Velocidade entre socos em segundos
-    STAMINA_THRESHOLD = 10, -- Stamina mínima para continuar
-    TELEPORT_DISTANCE = 5, -- Distância segura para teleporte
-    ANIMATION_SPEED = 0.3, -- Velocidade das animações
+    FAST_PUNCH_SPEED = 0.05,
+    STAMINA_THRESHOLD = 10,
+    TELEPORT_DISTANCE = 5,
+    ANIMATION_SPEED = 0.3,
 }
 
--- Sistema de Notificações
+-- ==================== NOTIFICAÇÕES ====================
 local NotificationSystem = {}
 NotificationSystem.__index = NotificationSystem
 
 function NotificationSystem.new()
     local self = setmetatable({}, NotificationSystem)
-    self.activeNotifications = {}
     return self
 end
 
 function NotificationSystem:Show(message, duration)
     duration = duration or 2
     
-    local screenGui = LocalPlayer:FindFirstChild("PlayerGui")
-    if not screenGui then return end
-    
-    local notification = Instance.new("Frame")
-    notification.Name = "Notification"
-    notification.Size = UDim2.new(0, 300, 0, 50)
-    notification.Position = UDim2.new(0.5, -150, 0, -60)
-    notification.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    notification.BackgroundTransparency = 0.1
-    notification.BorderSizePixel = 0
-    notification.ClipsDescendants = true
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 12)
-    corner.Parent = notification
-    
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(100, 100, 100)
-    stroke.Thickness = 1
-    stroke.Transparency = 0.5
-    stroke.Parent = notification
-    
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, -20, 1, 0)
-    label.Position = UDim2.new(0, 10, 0, 0)
-    label.BackgroundTransparency = 1
-    label.Text = message
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.Font = Enum.Font.GothamMedium
-    label.TextSize = 14
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = notification
-    
-    notification.Parent = screenGui
-    
-    -- Animação de entrada
-    local enterTween = TweenService:Create(notification, 
-        TweenInfo.new(CONFIG.ANIMATION_SPEED, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-        {Position = UDim2.new(0.5, -150, 0, 20)}
-    )
-    enterTween:Play()
-    
-    -- Remover após duração
-    task.wait(duration)
-    
-    local exitTween = TweenService:Create(notification, 
-        TweenInfo.new(CONFIG.ANIMATION_SPEED, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-        {Position = UDim2.new(0.5, -150, 0, -60)}
-    )
-    exitTween:Play()
-    exitTween.Completed:Connect(function()
-        notification:Destroy()
+    pcall(function()
+        local screenGui = LocalPlayer:FindFirstChild("PlayerGui")
+        if not screenGui then return end
+        
+        local notification = Instance.new("Frame")
+        notification.Size = UDim2.new(0, 300, 0, 50)
+        notification.Position = UDim2.new(0.5, -150, 0, -60)
+        notification.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+        notification.BackgroundTransparency = 0.1
+        notification.BorderSizePixel = 0
+        notification.ClipsDescendants = true
+        notification.Parent = screenGui
+        
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 12)
+        corner.Parent = notification
+        
+        local stroke = Instance.new("UIStroke")
+        stroke.Color = Color3.fromRGB(100, 100, 100)
+        stroke.Thickness = 1
+        stroke.Transparency = 0.5
+        stroke.Parent = notification
+        
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, -20, 1, 0)
+        label.Position = UDim2.new(0, 10, 0, 0)
+        label.BackgroundTransparency = 1
+        label.Text = message
+        label.TextColor3 = Color3.fromRGB(255, 255, 255)
+        label.Font = Enum.Font.GothamMedium
+        label.TextSize = 14
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = notification
+        
+        local enterTween = TweenService:Create(notification, 
+            TweenInfo.new(CONFIG.ANIMATION_SPEED, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {Position = UDim2.new(0.5, -150, 0, 20)}
+        )
+        enterTween:Play()
+        
+        task.wait(duration)
+        
+        local exitTween = TweenService:Create(notification, 
+            TweenInfo.new(CONFIG.ANIMATION_SPEED, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+            {Position = UDim2.new(0.5, -150, 0, -60)}
+        )
+        exitTween:Play()
+        exitTween.Completed:Connect(function()
+            notification:Destroy()
+        end)
     end)
 end
 
--- Criar UI Principal
+-- ==================== UI PRINCIPAL ====================
 local function createMainUI()
-    -- ScreenGui
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "AgeOfHeroesUI"
     screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
@@ -111,12 +101,10 @@ local function createMainUI()
     mainFrame.ClipsDescendants = true
     mainFrame.Parent = screenGui
     
-    -- Corner Principal
     local mainCorner = Instance.new("UICorner")
     mainCorner.CornerRadius = UDim.new(0, 16)
     mainCorner.Parent = mainFrame
     
-    -- Sombra
     local shadow = Instance.new("ImageLabel")
     shadow.Name = "Shadow"
     shadow.Size = UDim2.new(1, 20, 1, 20)
@@ -142,7 +130,6 @@ local function createMainUI()
     titleCorner.CornerRadius = UDim.new(0, 16)
     titleCorner.Parent = titleBar
     
-    -- Corrigir cantos superiores
     local titleBottom = Instance.new("Frame")
     titleBottom.Size = UDim2.new(1, 0, 0.5, 0)
     titleBottom.Position = UDim2.new(0, 0, 0.5, 0)
@@ -150,7 +137,6 @@ local function createMainUI()
     titleBottom.BorderSizePixel = 0
     titleBottom.Parent = titleBar
     
-    -- Título
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Size = UDim2.new(0.6, 0, 1, 0)
     titleLabel.Position = UDim2.new(0, 20, 0, 0)
@@ -162,7 +148,6 @@ local function createMainUI()
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
     titleLabel.Parent = titleBar
     
-    -- Botão Minimizar
     local minimizeButton = Instance.new("TextButton")
     minimizeButton.Name = "MinimizeButton"
     minimizeButton.Size = UDim2.new(0, 30, 0, 30)
@@ -179,7 +164,6 @@ local function createMainUI()
     minCorner.CornerRadius = UDim.new(0, 8)
     minCorner.Parent = minimizeButton
     
-    -- Botão Fechar
     local closeButton = Instance.new("TextButton")
     closeButton.Name = "CloseButton"
     closeButton.Size = UDim2.new(0, 30, 0, 30)
@@ -216,7 +200,6 @@ local function createMainUI()
     navCorner.CornerRadius = UDim.new(0, 16)
     navCorner.Parent = navBar
     
-    -- Corrigir cantos da navbar
     local navRight = Instance.new("Frame")
     navRight.Size = UDim2.new(0.5, 0, 1, 0)
     navRight.Position = UDim2.new(0.5, 0, 0, 0)
@@ -264,7 +247,6 @@ local function createMainUI()
     fastPunchPage.Parent = mainContent
     pages["FastPunch"] = fastPunchPage
     
-    -- Título da página
     local fpTitle = Instance.new("TextLabel")
     fpTitle.Size = UDim2.new(1, 0, 0, 30)
     fpTitle.Position = UDim2.new(0, 0, 0, 10)
@@ -276,12 +258,11 @@ local function createMainUI()
     fpTitle.TextXAlignment = Enum.TextXAlignment.Center
     fpTitle.Parent = fastPunchPage
     
-    -- Descrição
     local fpDesc = Instance.new("TextLabel")
     fpDesc.Size = UDim2.new(1, -20, 0, 40)
     fpDesc.Position = UDim2.new(0, 10, 0, 50)
     fpDesc.BackgroundTransparency = 1
-    fpDesc.Text = "Ataque rápido como uma metralhadora! Remove o cooldown entre socos."
+    fpDesc.Text = "Ataque rápido como uma metralhadora!"
     fpDesc.TextColor3 = Color3.fromRGB(150, 150, 150)
     fpDesc.Font = Enum.Font.GothamMedium
     fpDesc.TextSize = 12
@@ -289,7 +270,6 @@ local function createMainUI()
     fpDesc.TextXAlignment = Enum.TextXAlignment.Center
     fpDesc.Parent = fastPunchPage
     
-    -- Botão ON/OFF
     local fpToggle = Instance.new("TextButton")
     fpToggle.Name = "FastPunchToggle"
     fpToggle.Size = UDim2.new(0.4, 0, 0, 50)
@@ -306,7 +286,6 @@ local function createMainUI()
     fpToggleCorner.CornerRadius = UDim.new(0, 12)
     fpToggleCorner.Parent = fpToggle
     
-    -- Status da Stamina
     local staminaLabel = Instance.new("TextLabel")
     staminaLabel.Size = UDim2.new(1, -20, 0, 30)
     staminaLabel.Position = UDim2.new(0, 10, 0, 180)
@@ -327,7 +306,6 @@ local function createMainUI()
     teleportPage.Parent = mainContent
     pages["Teleport"] = teleportPage
     
-    -- Título da página
     local tpTitle = Instance.new("TextLabel")
     tpTitle.Size = UDim2.new(1, 0, 0, 30)
     tpTitle.Position = UDim2.new(0, 0, 0, 10)
@@ -370,8 +348,7 @@ local function createMainUI()
     local startPos = nil
     
     titleBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-           input.UserInputType == Enum.UserInputType.Touch then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
             dragStart = input.Position
             startPos = mainFrame.Position
@@ -379,8 +356,7 @@ local function createMainUI()
     end)
     
     UserInputService.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or 
-           input.UserInputType == Enum.UserInputType.Touch) then
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - dragStart
             mainFrame.Position = UDim2.new(
                 startPos.X.Scale, 
@@ -392,8 +368,7 @@ local function createMainUI()
     end)
     
     UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-           input.UserInputType == Enum.UserInputType.Touch then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = false
         end
     end)
@@ -404,7 +379,6 @@ local function createMainUI()
             page.Visible = (name == pageName)
         end
         
-        -- Destacar botão ativo
         if pageName == "FastPunch" then
             fastPunchBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
             teleportBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
@@ -430,32 +404,28 @@ local function createMainUI()
         isMinimized = not isMinimized
         
         if isMinimized then
-            local tween = TweenService:Create(mainFrame, 
+            TweenService:Create(mainFrame, 
                 TweenInfo.new(CONFIG.ANIMATION_SPEED, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
                 {Size = UDim2.new(0, 500, 0, 45)}
-            )
-            tween:Play()
+            ):Play()
             minimizeButton.Text = "□"
         else
-            local tween = TweenService:Create(mainFrame, 
+            TweenService:Create(mainFrame, 
                 TweenInfo.new(CONFIG.ANIMATION_SPEED, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
                 {Size = originalSize}
-            )
-            tween:Play()
+            ):Play()
             minimizeButton.Text = "—"
         end
     end)
     
     -- Fechar
     closeButton.MouseButton1Click:Connect(function()
-        local tween = TweenService:Create(mainFrame, 
+        TweenService:Create(mainFrame, 
             TweenInfo.new(CONFIG.ANIMATION_SPEED, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
             {Size = UDim2.new(0, 0, 0, 0)}
-        )
-        tween:Play()
-        tween.Completed:Connect(function()
-            screenGui:Destroy()
-        end)
+        ):Play()
+        task.wait(CONFIG.ANIMATION_SPEED)
+        screenGui:Destroy()
     end)
     
     return {
@@ -465,71 +435,172 @@ local function createMainUI()
         staminaLabel = staminaLabel,
         playerList = playerList,
         notificationSystem = NotificationSystem.new(),
-        pages = pages
+        pages = pages,
+        teleportPage = teleportPage,
+        fastPunchPage = fastPunchPage,
     }
 end
 
--- Sistema Fast Punch
-local function setupFastPunch(ui)
-    local connection = nil
-    
-    local function getStamina()
-        -- Tenta obter a stamina do personagem
-        local character = LocalPlayer.Character
-        if not character then return 0 end
-        
-        -- Procura por um atributo ou valor de stamina
-        local humanoid = character:FindFirstChild("Humanoid")
-        if not humanoid then return 0 end
-        
-        -- Verifica se existe um sistema de stamina
-        local stamina = character:GetAttribute("Stamina")
-        if stamina then
-            return stamina
-        end
-        
-        -- Fallback: usa a saúde como indicador
-        return humanoid.Health
-    end
-    
-    local function fastPunchLoop()
-        while CONFIG.FAST_PUNCH_ENABLED do
-            local stamina = getStamina()
-            
-            -- Atualiza o label de stamina
-            ui.staminaLabel.Text = "Stamina: " .. math.floor(stamina)
-            
-            -- Verifica se tem stamina suficiente
-            if stamina < CONFIG.STAMINA_THRESHOLD then
-                ui.staminaLabel.TextColor3 = Color3.fromRGB(231, 76, 60)
-                task.wait(0.5) -- Aguarda um pouco antes de verificar novamente
-                continue
-            end
-            
-            ui.staminaLabel.TextColor3 = Color3.fromRGB(46, 204, 113)
-            
-            -- Simula um soco
-            local character = LocalPlayer.Character
-            if character then
-                local humanoid = character:FindFirstChild("Humanoid")
-                if humanoid then
-                    -- Tenta ativar a animação de soco
-                    local animator = humanoid:FindFirstChild("Animator")
-                    if animator then
-                        -- Simula ação de soco (depende da implementação do jogo)
-                        -- Aqui você pode adicionar a lógica específica do Age of Heroes
-                        pcall(function()
-                            -- Exemplo: dispara evento remoto ou usa ferramenta
-                            local tool = character:FindFirstChildOfClass("Tool")
-                            if tool and tool:FindFirstChild("RemoteEvent") then
-                                tool.RemoteEvent:FireServer()
-                            end
-                        end)
-                    end
+-- ==================== SISTEMA DE TELEPORTE ====================
+local function setupTeleportSystem(ui)
+    local function updatePlayerList()
+        pcall(function()
+            for _, child in pairs(ui.playerList:GetChildren()) do
+                if child:IsA("TextButton") then
+                    child:Destroy()
                 end
             end
             
-            task.wait(CONFIG.FAST_PUNCH_SPEED)
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer then
+                    local btn = Instance.new("TextButton")
+                    btn.Size = UDim2.new(0.9, 0, 0, 35)
+                    btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+                    btn.Text = player.Name
+                    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    btn.Font = Enum.Font.GothamMedium
+                    btn.TextSize = 14
+                    btn.BorderSizePixel = 0
+                    btn.Parent = ui.playerList
+                    
+                    local btnCorner = Instance.new("UICorner")
+                    btnCorner.CornerRadius = UDim.new(0, 8)
+                    btnCorner.Parent = btn
+                    
+                    btn.MouseButton1Click:Connect(function()
+                        pcall(function()
+                            local targetChar = player.Character
+                            if not targetChar or not targetChar:FindFirstChild("HumanoidRootPart") then
+                                ui.notificationSystem:Show("❌ Jogador sem personagem!")
+                                return
+                            end
+                            
+                            local myChar = LocalPlayer.Character
+                            if not myChar or not myChar:FindFirstChild("HumanoidRootPart") then
+                                ui.notificationSystem:Show("❌ Você está sem personagem!")
+                                return
+                            end
+                            
+                            local targetPos = targetChar.HumanoidRootPart.Position
+                            local myHRP = myChar.HumanoidRootPart
+                            local distance = (targetPos - myHRP.Position).Magnitude
+                            
+                            if distance > CONFIG.TELEPORT_DISTANCE then
+                                ui.notificationSystem:Show("❌ Jogador muito longe! (" .. math.floor(distance) .. "m)")
+                                return
+                            end
+                            
+                            myHRP.CFrame = targetChar.HumanoidRootPart.CFrame
+                            ui.notificationSystem:Show("✅ Teleportado para " .. player.Name)
+                        end)
+                    end)
+                end
+            end
+        end)
+    end
+    
+    ui.teleportPage:GetPropertyChangedSignal("Visible"):Connect(function()
+        if ui.teleportPage.Visible then
+            updatePlayerList()
+        end
+    end)
+    
+    Players.PlayerAdded:Connect(updatePlayerList)
+    Players.PlayerRemoving:Connect(updatePlayerList)
+    
+    task.spawn(function()
+        while true do
+            task.wait(5)
+            if ui.teleportPage.Visible then
+                updatePlayerList()
+            end
+        end
+    end)
+end
+
+-- ==================== SISTEMA FAST PUNCH ====================
+local function setupFastPunch(ui)
+    local isRunning = false
+    
+    local function getStamina()
+        pcall(function()
+            local character = LocalPlayer.Character
+            if not character then return 0 end
+            
+            local humanoid = character:FindFirstChild("Humanoid")
+            if not humanoid then return 0 end
+            
+            local stamina = character:GetAttribute("Stamina") or character:GetAttribute("Energy")
+            if stamina then return stamina end
+            
+            stamina = character:FindFirstChild("Stamina")
+            if stamina and stamina:IsA("NumberValue") then
+                return stamina.Value
+            end
+            
+            return humanoid.Health
+        end)
+        return 0
+    end
+    
+    local function doPunch()
+        pcall(function()
+            local character = LocalPlayer.Character
+            if not character then return end
+            
+            local tool = character:FindFirstChildOfClass("Tool")
+            if tool then
+                local remoteEvent = tool:FindFirstChild("RemoteEvent") or tool:FindFirstChild("Attack") or tool:FindFirstChild("Activate")
+                if remoteEvent and remoteEvent:IsA("RemoteEvent") then
+                    remoteEvent:FireServer()
+                    return
+                end
+                
+                local bindable = tool:FindFirstChild("Activate") or tool:FindFirstChild("Attack")
+                if bindable and bindable:IsA("BindableEvent") then
+                    bindable:Fire()
+                    return
+                end
+                
+                if tool:IsA("Tool") then
+                    tool:Activate()
+                    return
+                end
+            end
+            
+            local events = ReplicatedStorage:FindFirstChild("Events")
+            if events then
+                local punchEvent = events:FindFirstChild("Punch") or events:FindFirstChild("Attack") or events:FindFirstChild("Swing")
+                if punchEvent and punchEvent:IsA("RemoteEvent") then
+                    punchEvent:FireServer()
+                    return
+                end
+            end
+            
+            local directEvent = ReplicatedStorage:FindFirstChild("Punch") or ReplicatedStorage:FindFirstChild("Attack")
+            if directEvent and directEvent:IsA("RemoteEvent") then
+                directEvent:FireServer()
+            end
+        end)
+    end
+    
+    local function fastPunchLoop()
+        isRunning = true
+        while CONFIG.FAST_PUNCH_ENABLED and isRunning do
+            pcall(function()
+                local stamina = getStamina()
+                ui.staminaLabel.Text = "Stamina: " .. math.floor(stamina)
+                
+                if stamina < CONFIG.STAMINA_THRESHOLD then
+                    ui.staminaLabel.TextColor3 = Color3.fromRGB(231, 76, 60)
+                    task.wait(0.5)
+                    return
+                end
+                
+                ui.staminaLabel.TextColor3 = Color3.fromRGB(46, 204, 113)
+                doPunch()
+                task.wait(CONFIG.FAST_PUNCH_SPEED)
+            end)
         end
     end
     
@@ -541,20 +612,27 @@ local function setupFastPunch(ui)
             ui.fpToggle.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
             ui.notificationSystem:Show("⚡ Fast Punch ATIVADO!")
             
-            -- Inicia o loop
-            task.spawn(fastPunchLoop)
+            if not isRunning then
+                task.spawn(fastPunchLoop)
+            end
         else
             ui.fpToggle.Text = "OFF"
             ui.fpToggle.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
             ui.notificationSystem:Show("⚡ Fast Punch DESATIVADO!")
+            isRunning = false
             ui.staminaLabel.Text = "Stamina: --"
             ui.staminaLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
         end
     end)
 end
 
--- Sistema de Teleporte
-local function setupTeleportSystem(ui)
-    local function updatePlayerList()
-        -- Limpa a lista atual
-        for _, child in pairs(ui.playerList:GetChildren()) do
+-- ==================== INICIALIZAÇÃO ====================
+local function initialize()
+    pcall(function()
+        local ui = createMainUI()
+        setupFastPunch(ui)
+        setupTeleportSystem(ui)
+    end)
+end
+
+initialize()
