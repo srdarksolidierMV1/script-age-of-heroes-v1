@@ -1,7 +1,7 @@
 --[[
     Age of Heroes - age modd v1
     Versão: 1.0.0
-    Desenvolvedor: Srdarksolidier
+    Desenvolvedor: Desconhecido
     Descrição: Interface premium com Fast Punch e Player Teleport
 --]]
 
